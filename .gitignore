@@ -1,0 +1,8 @@
+
+*.*
+
+!HDHomeRunEPG_To_XmlTv.py
+!README.md
+!.gitignore
+!.vscode/
+!.vscode/launch.json
