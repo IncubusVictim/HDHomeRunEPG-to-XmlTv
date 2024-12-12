@@ -77,7 +77,7 @@ parser.add_argument("--host", help="The host name or IP address of the HDHomeRun
 parser.add_argument("--filename", help="The file path and name of the EPG to be generated. Defaults to epg.xml in the current directory.")
 parser.add_argument("--days", help="The number of days in the future from now to obtain an EPG for. Defaults to 7 but will be restricted to a max of about 14 by the HDHomeRun device.")
 parser.add_argument("--hours", help="The number of hours of guide interation to obtain. Defaults to 3 hours.")
-parser.add_argument("--debug", help="Switch debug log message on, options in \"on\", \"full\" or \"off\". Defaults to \"on\"")
+parser.add_argument("--debug", help="Switch debug log message on, options are \"on\", \"full\" or \"off\". Defaults to \"on\"")
 showHelp = False
 try:
     args = parser.parse_args()
