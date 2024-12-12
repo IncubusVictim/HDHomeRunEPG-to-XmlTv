@@ -2,7 +2,7 @@
 
 ## Features
 
-A Pyton program to download the current EPG from an HDHomeRun Quattro box for the next 7 days into an XMLTV formatted file.
+A Python program to download the current EPG from an HDHomeRun Quattro box for the next 7 days into an XMLTV formatted file.
 
 I developed this so I could easily update the EPG on a Jellyfin media server that was linked to an HDHomeRun Quattro.  The HDHomeRun Quattro hardware automatically maintains the EPG for the channels it has tuned in, so it made sense to use this.  I scheduled it to run on a nightly basis at 1am shortly after which Jellyfin was scheduled to update its EPG from the XMLTV file.
 
