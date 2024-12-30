@@ -31,7 +31,7 @@ urlHost = "hdhomerun.local"
 epgFilename = "epg.xml"
 scheduleDurationInDays = 7
 hoursIncrement = 3
-showLogInfo = "on"
+showlog_info = "on"
 
 # Create an adapter that forces TLS v1.2
 class TLS12Adapter(HTTPAdapter):
@@ -54,21 +54,19 @@ def clean_text(text: str) -> str:
 
     return text.strip()
 
-# Logging
 def log(type, text):
     now = datetime.datetime.today()
-    if (type == "INFO" and (showLogInfo == "on" or showLogInfo == "full")) or (type == "DETAIL" and showLogInfo == "full"):
+    if (type == "INFO" and (showlog_info == "on" or showlog_info == "full")) or (type == "DETAIL" and showlog_info == "full"):
         print(type + " (" + str(now)[0:19] + "): " + text)
-def logError(text):
-    log("ERROR", text)
-def logInfo(text):
-    log("INFO", text)
-def logDetail(text):
-    log("DETAIL", text)
 
-# Set up the session with the custom TLS 1.2 adapter
-session = requests.Session()
-session.mount("https://", TLS12Adapter())
+def log_error(text):
+    log("ERROR", text)
+
+def log_info(text):
+    log("INFO", text)
+
+def log_detail(text):
+    log("DETAIL", text)
 
 # Set up all the command line parameters
 parser = argparse.ArgumentParser(add_help=False, description="Program to download the HDHomeRun device EPG and convert it to an XMLTV format suitable for Jellyfin.")
@@ -95,36 +93,40 @@ if (args.days != None):
 if (args.hours != None):
     hoursIncrement = int(args.hours)
 if (args.debug != None and args.debug.lower() == "on"):
-    showLogInfo = "on"
+    showlog_info = "on"
 if (args.debug != None and args.debug.lower() == "off"):
-    showLogInfo = "off"
+    showlog_info = "off"
 if (args.debug != None and args.debug.lower() == "full"):
-    showLogInfo = "full"
+    showlog_info = "full"
 
 # Construct the HDHomeRun info Url's
 deviceUrl = "http://" + urlHost + "/discover.json"
 lineUpUrl = "http://" + urlHost + "/lineup.json"
 
-logInfo("---------- Fetching HDHomeRun Web API Device Auth ----------")
+log_info("---------- Fetching HDHomeRun Web API Device Auth ----------")
+
+# Set up the session with the custom TLS 1.2 adapter
+session = requests.Session()
+session.mount("https://", TLS12Adapter())
 
 # Get DeviceAuth the HDHomeRun device info
 deviceResp = requests.get(deviceUrl)
 if deviceResp.status_code != 200:
-    logInfo("Device infor request failed: (" + deviceResp.status_code + ") " + deviceResp.reason)
+    log_info("Device infor request failed: (" + deviceResp.status_code + ") " + deviceResp.reason)
     sys.exit()
 deviceJson = deviceResp.json()
 deviceAuth = deviceJson["DeviceAuth"]
 
-logInfo("---------- Fetching HDHomeRun Web API Lineup ----------")
+log_info("---------- Fetching HDHomeRun Web API Lineup ----------")
 
 # Get the HDHomeRun channel line up info
 lineUpResp = requests.get(lineUpUrl)
 if lineUpResp.status_code != 200:
-    logInfo("Device infor request failed: (" + lineUpResp.status_code + ") " + lineUpResp.reason)
+    log_info("Device infor request failed: (" + lineUpResp.status_code + ") " + lineUpResp.reason)
     sys.exit()
 lineUpJson = lineUpResp.json()
 
-logInfo("---------- HDHomeRun RPG Extraction Started ----------")
+log_info("---------- HDHomeRun RPG Extraction Started ----------")
 
 # Prepare to process the HDHomeRun Guide
 timestamp1Day = 86400
@@ -137,7 +139,7 @@ guideHeader = {"Cache-Control":"no-cache","Content-Type":"multipart/form-data","
 # Begin the EPG extraction from the HDHomeRun device
 guideResp = session.post("https://api.hdhomerun.com/api/guide?DeviceAuth=" + deviceAuth + "&SynopsisLength=160", headers=guideHeader, data=guideData)
 if deviceResp.status_code != 200:
-    logInfo("HDHomeRun guide request failed: (" + deviceResp.status_code + ") " + deviceResp.reason)
+    log_info("HDHomeRun guide request failed: (" + deviceResp.status_code + ") " + deviceResp.reason)
     sys.exit()
 
 baseGuideJson = guideResp.json()
@@ -147,11 +149,11 @@ nextTimestamp = int(nextTimestamp + timestampIncrementHrs)
 # Loop for the next 6 days guide
 while nextTimestamp <= maxTimestamp:
     
-    logInfo("--> Processing from (" + str(nextTimestamp) + ") " + str(datetime.datetime.fromtimestamp(nextTimestamp)))
+    log_info("--> Processing from (" + str(nextTimestamp) + ") " + str(datetime.datetime.fromtimestamp(nextTimestamp)))
 
     guideResp = session.post("https://api.hdhomerun.com/api/guide?DeviceAuth=" + deviceAuth + "&SynopsisLength=160&Start=" + str(nextTimestamp), headers=guideHeader, data=guideData)
     if deviceResp.status_code != 200:
-        logInfo("HDHomeRun guide request failed: (" + deviceResp.status_code + ") " + deviceResp.reason)
+        log_info("HDHomeRun guide request failed: (" + deviceResp.status_code + ") " + deviceResp.reason)
         sys.exit()
 
     reqGuideJson = guideResp.json()
@@ -165,7 +167,7 @@ while nextTimestamp <= maxTimestamp:
         if "Affiliate" in reqChannel:
             channelText = reqChannel["Affiliate"]
 
-        logDetail("----> Processing channel: " + reqChannel["GuideNumber"] + " - " + channelText)
+        log_detail("----> Processing channel: " + reqChannel["GuideNumber"] + " - " + channelText)
 
         baseChannel = {}
         for srchChannel in baseGuideJson:
@@ -185,13 +187,13 @@ while nextTimestamp <= maxTimestamp:
 
                 if newGuideItem == {}:
                     baseChannel["Guide"].append(reqGuideItem)
-                    logDetail("------> Appending: " + reqGuideItem["Title"] + " from " + str(reqGuideItem["StartTime"]) + " to " + str(reqGuideItem["EndTime"]))
+                    log_detail("------> Appending: " + reqGuideItem["Title"] + " from " + str(reqGuideItem["StartTime"]) + " to " + str(reqGuideItem["EndTime"]))
 
     nextTimestamp = int(nextTimestamp + timestampIncrementHrs)
 
-logInfo("---------- HDHomeRun RPG Extraction Completed ----------")
+log_info("---------- HDHomeRun RPG Extraction Completed ----------")
 
-logInfo("---------- HDHomeRun XMLTV Transformation Started ----------")
+log_info("---------- HDHomeRun XMLTV Transformation Started ----------")
 
 tv = ET.Element("tv")
 tv.set("generator-info-name", "HDHomeRun")
@@ -259,7 +261,7 @@ for reqChannel in baseGuideJson:
                 episode.set("system", "xmltv_ns")
                 episode.text = "{Series}.{Episode}.0".format(Series=seriesNo, Episode=episodeNo)
             else:
-                logError("Enable to process episode")
+                log_error("Enable to process episode")
             episodeOS = ET.SubElement(programme, "episode-num")
             episodeOS.set("system", "onscreen")
             episodeOS.text = episodeNumber
@@ -280,11 +282,11 @@ for reqChannel in baseGuideJson:
                 category.set("lang", "en")
                 category.text = filter
 
-logInfo("---------- HDHomeRun XMLTV Transformation Completed ----------")
+log_info("---------- HDHomeRun XMLTV Transformation Completed ----------")
 
-logInfo("---------- Writing XMLTV to file " + epgFilename + " Started ----------")
+log_info("---------- Writing XMLTV to file " + epgFilename + " Started ----------")
 
 # Create the XMLTV file
 data = ET.ElementTree(tv).write(epgFilename, encoding='utf-8')
 
-logInfo("---------- Writing XMLTV to file " + epgFilename + " Completed ----------")
+log_info("---------- Writing XMLTV to file " + epgFilename + " Completed ----------")
