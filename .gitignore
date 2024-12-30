@@ -6,3 +6,4 @@
 !.gitignore
 !.vscode/
 !.vscode/launch.json
+!binaries/*.zip

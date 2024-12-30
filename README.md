@@ -22,3 +22,19 @@ python HDHomeRunEPG_To_XmlTv.py [--help] [--host <HOST>] [--filename <FILENAME>]
 | `--days <DAYS>` | The number of days in the future from now to obtain an EPG for. Defaults to 7 but will be restricted to a max of about 14 by the HDHomeRun device. |
 | `--hours <HOURS>` | The number of hours of guide interation to obtain. Defaults to 3 hours. |
 | `--debug <DEBUG>` | Switch debug log message on, options are "on", "full" or "off". Defaults to "on" |
+
+## Binaries
+
+Please find a <b>binaries</b> directory that contains a PyInstaller built distibution that can be run independently on the platform it is built for.  Extract the relevant binary from the zip file onto your machine and run accord to the instructions below:
+
+### Linux
+
+TBC...
+
+### Mac OS
+
+TBC...
+
+### Windows
+
+TBC...
