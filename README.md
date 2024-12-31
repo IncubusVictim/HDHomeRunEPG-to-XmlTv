@@ -43,7 +43,7 @@ If this fails and you need to make the HDHomeRunEPG_To_XmlTv runnable, type in t
 chmod 755 HDHomeRunEPG_To_XmlTv
 ```
 
-### Mac OS (Work In Progress)
+### Mac OS (Tested)
 
 <i><b>IMPORTANT: The Mac OS binary is not reliable yet due to an SSL library issue I need to resolve.</b></i>
 
