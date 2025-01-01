@@ -66,3 +66,9 @@ To run the Mac OS binary from a terminal window, put yourself in the binaries di
 ```
 .\HDHomeRunEPG_To_XmlTv --host 192.168.1.100
 ```
+
+## Fixes / Known Issues
+
+#0001 - (FIXED 2025-01-01) The XMLTV programme dates are set to a UTC date, it should be set the the region of the world you are in e.g. CST.
+
+#0002 - (OUTSTANDING) The XMLTV OriginalAirdate for programme needs the date format improved.

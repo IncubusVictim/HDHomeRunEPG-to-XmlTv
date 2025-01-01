@@ -229,8 +229,8 @@ for reqChannel in baseGuideJson:
 
         # Programme
         programme = ET.SubElement(tv, "programme")
-        startTime = datetime.datetime.fromtimestamp(reqGuide["StartTime"]).strftime("%Y%m%d%H%M%S +0000")
-        endTime = datetime.datetime.fromtimestamp(reqGuide["EndTime"]).strftime("%Y%m%d%H%M%S +0000")
+        startTime = datetime.datetime.fromtimestamp(reqGuide["StartTime"]).astimezone().strftime("%Y%m%d%H%M%S %z")
+        endTime = datetime.datetime.fromtimestamp(reqGuide["EndTime"]).astimezone().strftime("%Y%m%d%H%M%S %z") 
         programme.set("channel", reqChannel["GuideNumber"])
         programme.set("start", startTime)
         programme.set("stop", endTime)
@@ -270,7 +270,7 @@ for reqChannel in baseGuideJson:
                 originalAirdate = reqGuide["OriginalAirdate"]
                 episodeOAD = ET.SubElement(programme, "episode-num")
                 episodeOAD.set("system", "original-air-date")
-                episodeOAD.text = datetime.datetime.fromtimestamp(reqGuide["OriginalAirdate"]).strftime("%Y-%m-%d %H:%M:%S")
+                episodeOAD.text = datetime.datetime.fromtimestamp(reqGuide["OriginalAirdate"]).astimezone().strftime("%Y-%m-%d %H:%M:%S %z")
 
             if "EpisodeTitle" in reqGuide:
                 episodeTitle = reqGuide["EpisodeTitle"]
