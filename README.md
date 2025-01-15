@@ -25,6 +25,45 @@ python HDHomeRunEPG_To_XmlTv.py [--help] [--host <HOST>] [--filename <FILENAME>]
 | `--hours <HOURS>` | The number of hours of guide interation to obtain. Defaults to 3 hours. This is an adavanced option which basically tells the app how many hours to increment for each query to the HDHomeRun device.  Making this too large will mean gaps can appear int he guide, equally making it too small will make the app run longer. Note any duplicate programmes retrieved are ignored anyway. |
 | `--debug <DEBUG>` | Switch debug log message on, options are "on", "full" or "off". Defaults to "on". This is usefuly to see the detail of all the programmes being retrieved, but will mak the app take longer to run. |
 
+## Python Pre-requisites
+
+To run the Python application as described in the [Usage](#usage) section above, you will need the following elements set up:
+
+### Install Python
+
+Install Python onto your platform if it is not already available and ensure you can execute the following from you terminal/command/Powershell window:
+
+```
+python --version
+```
+
+If this return the Python version you have it installed correctly.
+
+### Install PIP
+
+With Python installed you should have the PIP utility to install Python packages. If not check instructions for your platform.
+
+```
+pip --version
+```
+
+OR 
+
+```
+pip3 --version
+```
+
+### Install HDHomeRunEPG_To_XmlTv Python packages
+
+Install any packages that you do not have already installed. When you run the Python program it will complain about a missing package.
+
+The following are obvious packages I needed to install to get this running:
+
+```
+pip3 install argparse
+pip3 install requests
+```
+
 ## Binaries
 
 Please find a <b>binaries</b> directory in the repository root that contains a PyInstaller built distibution that can be run independently on the platform it is built for.  Extract the relevant binary platform zip files onto your machine and run according to the instructions below:
