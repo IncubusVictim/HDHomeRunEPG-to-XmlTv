@@ -255,8 +255,8 @@ for reqChannel in baseGuideJson:
         if "EpisodeNumber" in reqGuide:
             episodeNumber = reqGuide["EpisodeNumber"]
             if "S" in episodeNumber and "E" in episodeNumber:
-                seriesNo = episodeNumber[episodeNumber.index("S") + 1:episodeNumber.index("E")]
-                episodeNo = episodeNumber[episodeNumber.index("E") + 1:]
+                seriesNo = int(episodeNumber[episodeNumber.index("S") + 1:episodeNumber.index("E")]) - 1
+                episodeNo = int(episodeNumber[episodeNumber.index("E") + 1:]) - 1
                 episode = ET.SubElement(programme, "episode-num")
                 episode.set("system", "xmltv_ns")
                 episode.text = "{Series}.{Episode}.0".format(Series=seriesNo, Episode=episodeNo)
