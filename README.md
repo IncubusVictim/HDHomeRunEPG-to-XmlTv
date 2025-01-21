@@ -84,8 +84,6 @@ chmod 755 HDHomeRunEPG_To_XmlTv
 
 ### Mac OS (Tested)
 
-<i><b>IMPORTANT: The Mac OS binary is not reliable yet due to an SSL library issue I need to resolve.</b></i>
-
 To run the Mac OS binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
 
 ```
