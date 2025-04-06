@@ -67,6 +67,14 @@ pip3 install argparse
 pip3 install requests
 ```
 
+### Running the HDHomeRunEPG_To_XmlTv Python app
+
+Simply run the HDHomeRunEPG_To_XmlTv app on your platform, e.g.
+
+```
+python HDHomeRunEPG_to_XmlTv.py --host 192.168.68.102
+```
+
 ## Binaries
 
 Please find a <b>binaries</b> directory in the repository root that contains a PyInstaller built distibution that can be run independently on the platform it is built for.  Extract the relevant binary platform zip files onto your machine and run according to the instructions below:
