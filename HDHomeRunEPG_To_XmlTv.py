@@ -20,11 +20,11 @@ import sys
 import xml.etree.ElementTree as ET
 import unicodedata
 
-__author__ = "Samantha Little"
-__credits__ = ["Samantha Little"]
+__author__ = "Incubus Victim"
+__credits__ = ["Incubus Victim"]
 __license__ = "GPL"
 __version__ = "1.0.0"
-__maintainer__ = "Samantha Little"
+__maintainer__ = "Incubus Victim"
 
 # Defaults
 urlHost = "hdhomerun.local"
@@ -273,8 +273,9 @@ for reqChannel in baseGuideJson:
                 episodeOAD.text = datetime.datetime.fromtimestamp(reqGuide["OriginalAirdate"]).astimezone().strftime("%Y-%m-%d %H:%M:%S %z")
 
             if "EpisodeTitle" in reqGuide:
-                episodeTitle = reqGuide["EpisodeTitle"]
-                title.text = title.text + ": " + episodeTitle
+                episodeTitle = ET.SubElement(programme, "sub-title")
+                episodeTitle.set("lang", "en")
+                episodeTitle.text = reqGuide["EpisodeTitle"]
 
         if "Filter" in reqGuide:
             for filter in reqGuide["Filter"]:
