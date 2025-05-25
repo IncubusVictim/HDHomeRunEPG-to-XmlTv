@@ -281,9 +281,9 @@ for reqChannel in baseGuideJson:
 
             if "OriginalAirdate" in reqGuide:
                 originalAirdate = reqGuide["OriginalAirdate"]
-                episodeOAD = ET.SubElement(programme, "episode-num")
-                episodeOAD.set("system", "original-air-date")
-                episodeOAD.text = datetime.datetime.fromtimestamp(reqGuide["OriginalAirdate"]).astimezone().strftime("%Y-%m-%d %H:%M:%S %z")
+                if is_new_episode(originalAirdate) == False:
+                    episodePS = ET.SubElement(programme, "previously-shown")
+                    episodePS.set("start", datetime.datetime.fromtimestamp(originalAirdate).astimezone().strftime("%Y%m%d%H%M%S"))
 
             if "EpisodeTitle" in reqGuide:
                 episodeTitle = ET.SubElement(programme, "sub-title")
