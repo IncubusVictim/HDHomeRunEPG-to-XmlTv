@@ -31,7 +31,6 @@ urlHost = "hdhomerun.local"
 epgFilename = "epg.xml"
 scheduleDurationInDays = 7
 hoursIncrement = 3
-newEpisodeThreshold = 7
 showlog_info = "on"
 
 # Create an adapter that forces TLS v1.2
@@ -55,14 +54,12 @@ def clean_text(text: str) -> str:
 
     return text.strip()
 
-def is_new_episode(original_air_date):
-    if original_air_date is None:
+yesterdayDateUTC = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)).date()
+def is_new_episode(originalAirDate: datetime):
+    if originalAirDate is None:
         return False
     
-    current_time = datetime.datetime.now().timestamp()
-    days_since_original_air = (current_time - original_air_date) / (24*60*60)
-    
-    return days_since_original_air <= newEpisodeThreshold
+    return originalAirDate.date() >= yesterdayDateUTC
 
 def log(type, text):
     now = datetime.datetime.today()
@@ -85,7 +82,6 @@ parser.add_argument("--host", help="The host name or IP address of the HDHomeRun
 parser.add_argument("--filename", help="The file path and name of the EPG to be generated. Defaults to epg.xml in the current directory.")
 parser.add_argument("--days", help="The number of days in the future from now to obtain an EPG for. Defaults to 7 but will be restricted to a max of about 14 by the HDHomeRun device.")
 parser.add_argument("--hours", help="The number of hours of guide interation to obtain. Defaults to 3 hours.")
-parser.add_argument("--new-threshold", help="Number of days to consider an episode 'new'. Defaults to 7 days.")
 parser.add_argument("--debug", help="Switch debug log message on, options are \"on\", \"full\" or \"off\". Defaults to \"on\"")
 showHelp = False
 try:
@@ -103,8 +99,6 @@ if (args.days != None):
     scheduleDurationInDays = int(args.days)
 if (args.hours != None):
     hoursIncrement = int(args.hours)
-if (args.new_threshold != None):
-    newEpisodeThreshold = int(args.new_threshold)
 if (args.debug != None and args.debug.lower() == "on"):
     showlog_info = "on"
 if (args.debug != None and args.debug.lower() == "off"):
@@ -280,10 +274,13 @@ for reqChannel in baseGuideJson:
             episodeOS.text = episodeNumber
 
             if "OriginalAirdate" in reqGuide:
-                originalAirdate = reqGuide["OriginalAirdate"]
-                if is_new_episode(originalAirdate) == False:
+                originalAirDate = reqGuide["OriginalAirdate"]
+                airDate = datetime.datetime.fromtimestamp(originalAirDate).astimezone(datetime.timezone.utc)
+                if is_new_episode(airDate) == False:
                     episodePS = ET.SubElement(programme, "previously-shown")
-                    episodePS.set("start", datetime.datetime.fromtimestamp(originalAirdate).astimezone().strftime("%Y%m%d%H%M%S"))
+                    episodePS.set("start", airDate.strftime("%Y%m%d%H%M%S"))
+            else:
+                ET.SubElement(programme, "previously-shown") # No original air date provided, assuming it aired before 1970
 
             if "EpisodeTitle" in reqGuide:
                 episodeTitle = ET.SubElement(programme, "sub-title")

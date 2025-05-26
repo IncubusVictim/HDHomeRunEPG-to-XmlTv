@@ -16,7 +16,7 @@ I developed this so I could easily update the EPG on a Jellyfin media server tha
 ## Usage
 
 ```
-python HDHomeRunEPG_To_XmlTv.py [--help] [--host <HOST>] [--filename <FILENAME>] [--days <DAYS>] [--hours <HOURS>] [--new-threshold <DAYS>] [--debug <DEBUG>]
+python HDHomeRunEPG_To_XmlTv.py [--help] [--host <HOST>] [--filename <FILENAME>] [--days <DAYS>] [--hours <HOURS>] [--debug <DEBUG>]
 ```
 
 |      Paramater | Description     |
@@ -26,7 +26,6 @@ python HDHomeRunEPG_To_XmlTv.py [--help] [--host <HOST>] [--filename <FILENAME>]
 | `--filename <FILENAME>` | The file path and name of the EPG to be generated. Defaults to epg.xml in the current directory. |
 | `--days <DAYS>` | The number of days in the future from now to obtain an EPG for. Defaults to 7 but will be restricted to the maximum number of days the HDHomeRun device will return. |
 | `--hours <HOURS>` | The number of hours of guide interation to obtain. Defaults to 3 hours. This is an adavanced option which basically tells the app how many hours to increment for each query to the HDHomeRun device.  Making this too large will mean gaps can appear int he guide, equally making it too small will make the app run longer. Note any duplicate programmes retrieved are ignored anyway. |
-| `--new-threshold <DAYS>` | The number of days old an episode has to be for it to not be considered "new" anymore. Defaults to 7 days. |
 | `--debug <DEBUG>` | Switch debug log message on, options are "on", "full" or "off". Defaults to "on". This is usefuly to see the detail of all the programmes being retrieved, but will mak the app take longer to run. |
 
 ## Python Pre-requisites
