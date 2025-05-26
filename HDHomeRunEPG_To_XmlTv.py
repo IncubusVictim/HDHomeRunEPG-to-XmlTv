@@ -54,6 +54,13 @@ def clean_text(text: str) -> str:
 
     return text.strip()
 
+yesterdayDateUTC = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)).date()
+def is_new_episode(originalAirDate: datetime):
+    if originalAirDate is None:
+        return False
+    
+    return originalAirDate.date() >= yesterdayDateUTC
+
 def log(type, text):
     now = datetime.datetime.today()
     if (type == "INFO" and (showlog_info == "on" or showlog_info == "full")) or (type == "DETAIL" and showlog_info == "full"):
@@ -267,10 +274,13 @@ for reqChannel in baseGuideJson:
             episodeOS.text = episodeNumber
 
             if "OriginalAirdate" in reqGuide:
-                originalAirdate = reqGuide["OriginalAirdate"]
-                episodeOAD = ET.SubElement(programme, "episode-num")
-                episodeOAD.set("system", "original-air-date")
-                episodeOAD.text = datetime.datetime.fromtimestamp(reqGuide["OriginalAirdate"]).astimezone().strftime("%Y-%m-%d %H:%M:%S %z")
+                originalAirDate = reqGuide["OriginalAirdate"]
+                airDate = datetime.datetime.fromtimestamp(originalAirDate).astimezone(datetime.timezone.utc)
+                if is_new_episode(airDate) == False:
+                    episodePS = ET.SubElement(programme, "previously-shown")
+                    episodePS.set("start", airDate.strftime("%Y%m%d%H%M%S"))
+            else:
+                ET.SubElement(programme, "previously-shown") # No original air date provided, assuming it aired before 1970
 
             if "EpisodeTitle" in reqGuide:
                 episodeTitle = ET.SubElement(programme, "sub-title")
