@@ -3,15 +3,21 @@
 <a href="https://buymeacoffee.com/incubusvictim" target="_blank"><img align="top" src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a> <img align="top" src="https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/blob/main/bmc_qr.png" width="100" />
 </div>
 
+## Acknowledgments
+
+Thanks to the following contributors for their issue fixes:
+
+- [@supitsmike](https://github.com/supitsmike) – Fixed issue [#5](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/5): EPG - All programs listed as "New"
+
 ## Features
 
 A Python program to download the current EPG from an HDHomeRun Quattro box for the next 7 days and convert this into an XMLTV formatted file.
 
 I developed this so I could easily update the EPG on a Jellyfin media server that was linked to an HDHomeRun Quattro.  The HDHomeRun Quattro hardware automatically maintains the EPG for the channels it has tuned in, so it made sense to use this as it is a perfect match for the channels used by Jellyfin.  I personally schedule it to run on a nightly basis at 1am shortly after which Jellyfin is scheduled to update its EPG from the newly generated XMLTV file.
 
-<i><b>NOTE 1:</b> The HDHomeRun Quattro does have a limitation of 7 days EPG, so trying to go beyond that is pointless.</i>
+~~<i><b>NOTE 1:</b> The HDHomeRun Quattro does have a limitation of 7 days EPG, so trying to go beyond that is pointless. </i>~~
 
-<i><b>NOTE 2:</b> The Binaries I have generated are purely for those that are not comfortable running the Python application.  All of the binaries run on my local hardware and virtual machines, but if you have any problems please send me a message and I will try my best to help out.</i>
+<i><b>NOTE 1:</b> The Binaries I have generated are purely for those that are not comfortable running the Python application.  All of the binaries run on my local hardware and virtual machines, but if you have any problems please send me a message and I will try my best to help out.  The MacOS binary is out of date as I temporarily do not have the environment to build it.</i>
 
 ## Usage
 
@@ -93,7 +99,7 @@ If this fails and you need to make the HDHomeRunEPG_To_XmlTv runnable, type in t
 chmod 755 HDHomeRunEPG_To_XmlTv
 ```
 
-### Mac OS (Tested)
+### Mac OS (Tested) - OUT OF DATE
 
 To run the Mac OS binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
 
