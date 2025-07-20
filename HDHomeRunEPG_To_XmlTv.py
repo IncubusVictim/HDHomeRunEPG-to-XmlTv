@@ -8,6 +8,11 @@ the channels it has tuned in, so it made sense to use this.
 
 The HDHomeRun Quattro has a limitation of just over 7 days EPG, so trying to go beyond that
 is pointless.
+
+Fixes:
+
+#4 - Many thanks to @supitsmike for fixing the bug where all episodes were showing as "New".
+#7 - Add the <new /> to help with NEXTPVR intepretting a new show correctly.
 """
 
 import argparse
@@ -276,7 +281,9 @@ for reqChannel in baseGuideJson:
             if "OriginalAirdate" in reqGuide:
                 originalAirDate = reqGuide["OriginalAirdate"]
                 airDate = datetime.datetime.fromtimestamp(originalAirDate).astimezone(datetime.timezone.utc)
-                if is_new_episode(airDate) == False:
+                if is_new_episode(airDate):
+                    ET.SubElement(programme, "new")
+                else:
                     episodePS = ET.SubElement(programme, "previously-shown")
                     episodePS.set("start", airDate.strftime("%Y%m%d%H%M%S"))
             else:
