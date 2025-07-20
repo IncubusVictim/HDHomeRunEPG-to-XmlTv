@@ -11,7 +11,7 @@ is pointless.
 
 Fixes:
 
-#4 - Many thanks to @supitsmike for fixing the bug where all episodes were showing as "New".
+#5 - Many thanks to @supitsmike for fixing the bug where all episodes were showing as "New".
 #7 - Add the <new /> to help with NEXTPVR intepretting a new show correctly.
 """
 
