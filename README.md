@@ -85,7 +85,7 @@ python HDHomeRunEPG_to_XmlTv.py --host 192.168.68.102
 
 Please find a <b>binaries</b> directory in the repository root that contains a PyInstaller built distibution that can be run independently on the platform it is built for.  Extract the relevant binary platform zip files onto your machine and run according to the instructions below:
 
-### Debian Linux (Tested)
+### Debian Linux (#7 Tested)
 
 To run the Mac OS binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
 
@@ -99,7 +99,7 @@ If this fails and you need to make the HDHomeRunEPG_To_XmlTv runnable, type in t
 chmod 755 HDHomeRunEPG_To_XmlTv
 ```
 
-### Mac OS (Tested) - OUT OF DATE
+### Mac OS (#7 Tested)
 
 To run the Mac OS binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
 
@@ -113,7 +113,7 @@ If this fails and you need to make the HDHomeRunEPG_To_XmlTv runnable, type in t
 chmod 755 HDHomeRunEPG_To_XmlTv
 ```
 
-### Windows (Tested)
+### Windows (#7 Tested)
 
 To run the Mac OS binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
 
