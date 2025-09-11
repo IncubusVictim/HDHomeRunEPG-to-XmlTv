@@ -23,7 +23,7 @@ I developed this so I could easily update the EPG on a Jellyfin media server tha
 python HDHomeRunEPG_To_XmlTv.py [--help] [--host <HOST>] [--filename <FILENAME>] [--days <DAYS>] [--hours <HOURS>] [--debug <DEBUG>]
 ```
 
-|      Paramater | Description     |
+|      Parameter | Description     |
 | -------------: | :-------------- |
 | `--help`  | Show the command parameters available. |
 | `--host <HOST>`  | The host name or IP address of the HDHomeRun server if different from "hdhomerun.local". |
