@@ -258,6 +258,11 @@ for reqChannel in baseGuideJson:
             description.set('lang', 'en')
             description.text = clean_text(reqGuide["Synopsis"])
 
+        if "EpisodeTitle" in reqGuide:
+            episodeTitle = ET.SubElement(programme, "sub-title")
+            episodeTitle.set("lang", "en")
+            episodeTitle.text = reqGuide["EpisodeTitle"]
+
         # Programme icon
         if "ImageURL" in reqGuide:
             icon = ET.SubElement(programme, "icon")
@@ -288,11 +293,6 @@ for reqChannel in baseGuideJson:
                     episodePS.set("start", airDate.strftime("%Y%m%d%H%M%S"))
             else:
                 ET.SubElement(programme, "previously-shown") # No original air date provided, assuming it aired before 1970
-
-            if "EpisodeTitle" in reqGuide:
-                episodeTitle = ET.SubElement(programme, "sub-title")
-                episodeTitle.set("lang", "en")
-                episodeTitle.text = reqGuide["EpisodeTitle"]
 
         if "Filter" in reqGuide:
             for filter in reqGuide["Filter"]:
