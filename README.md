@@ -5,9 +5,10 @@
 
 ## Acknowledgments
 
-Thanks to the following contributors for their issue fixes:
+Thanks to the following contributors for their support:
 
 - [@supitsmike](https://github.com/supitsmike) – Fixed issue [#5](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/5): EPG - All programs listed as "New"
+- [@AcSlayter](https://github.com/acslayter) – Added docker support
 
 ## Features
 
