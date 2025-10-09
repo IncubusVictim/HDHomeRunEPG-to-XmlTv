@@ -1,0 +1,31 @@
+
+
+services:
+  # jellyfin:
+  #   image: jellyfin/jellyfin
+  #   container_name: jellyfin
+  #   ports:
+  #     - 8096:8096
+  #   volumes:
+  #     - output_data:/app/output
+  #   restart: 'unless-stopped'
+  #   environment:
+  #     - JELLYFIN_PublishedServerUrl=http://jellyfin.ac-local.com
+  #   extra_hosts:
+  #     - 'host.docker.internal:host-gateway'
+
+  tvguide:
+    image: tvguide
+    container_name: tvguide
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - output_data:/app/output
+    environment:
+      - HOST=192.168.1.100
+      - FILENAME=/app/output/output.xml
+    restart: 'unless-stopped'
+
+volumes:
+  output_data:
