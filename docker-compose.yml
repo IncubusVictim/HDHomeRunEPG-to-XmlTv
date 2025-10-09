@@ -10,7 +10,7 @@ services:
   #     - output_data:/app/output
   #   restart: 'unless-stopped'
   #   environment:
-  #     - JELLYFIN_PublishedServerUrl=http://jellyfin.ac-local.com
+  #     - JELLYFIN_PublishedServerUrl=http://jellyfin.local.com
   #   extra_hosts:
   #     - 'host.docker.internal:host-gateway'
 
