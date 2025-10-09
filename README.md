@@ -118,3 +118,36 @@ To run the Mac OS binary from a terminal window, put yourself in the binaries di
 ```
 .\HDHomeRunEPG_To_XmlTv --host 192.168.1.100
 ```
+# Docker Usage
+
+You can run this project using Docker. Here are the steps:
+
+1. **Update the HDHomeRun host:**
+	Edit the `HOST` environment variable in your `docker-compose.yml` file or set it directly in your Docker command. Example:
+	```yaml
+	environment:
+	  - HOST=192.168.1.100
+	```
+	Or set it in your run command:
+	```sh
+	docker run --rm -e HOST=192.168.1.100 hdhomerun-epg
+	```
+
+2. **Build the Docker image:**
+	```sh
+	docker compose build
+	```
+
+3. **Start the container:**
+	```sh
+	docker compose up
+	```
+
+4. **Cron schedule:**
+	The script is scheduled to run every day at 1am using cron inside the container:
+	```cron
+	0 1 * * *
+	```
+	This will automatically update the EPG file as specified by the `FILENAME` environment variable.
+
+---
