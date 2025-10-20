@@ -1,310 +1,260 @@
-"""
-Program to download the current EPG from an HDHomeRun Quattro box for the next 7 days into
-an XMLTV formatted file.
-
-I developed this so I could easily update the EPG on a Jellyfin media server that was linked
-to an HDHomeRun Quattro.  The HDHomeRun Quattro hardware automatically maintains the EPG for
-the channels it has tuned in, so it made sense to use this.
-
-The HDHomeRun Quattro has a limitation of just over 7 days EPG, so trying to go beyond that
-is pointless.
-
-Fixes:
-
-#5 - Many thanks to @supitsmike for fixing the bug where all episodes were showing as "New".
-#7 - Add the <new /> to help with NEXTPVR intepretting a new show correctly.
-"""
 
 import argparse
 import datetime
-import re
-import requests
-from requests.adapters import HTTPAdapter
+import json
+import logging
+import pytz
 import ssl
 import sys
+from tzlocal import get_localzone
+import urllib.request
 import xml.etree.ElementTree as ET
-import unicodedata
 
 __author__ = "Incubus Victim"
 __credits__ = ["Incubus Victim"]
 __license__ = "GPL"
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __maintainer__ = "Incubus Victim"
 
-# Defaults
-urlHost = "hdhomerun.local"
-epgFilename = "epg.xml"
-scheduleDurationInDays = 7
-hoursIncrement = 3
-showlog_info = "on"
-
-# Create an adapter that forces TLS v1.2
-class TLS12Adapter(HTTPAdapter):
-    def init_poolmanager(self, *args, **kwargs):
-        context = ssl.create_default_context()
-        context.options |= ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3  # Disable older SSL versions
-        context.minimum_version = ssl.TLSVersion.TLSv1_2  # Enforce TLS v1.2
-        kwargs["ssl_context"] = context
-        return super().init_poolmanager(*args, **kwargs)
-
-def clean_text(text: str) -> str:
-    # Removes control characters
-    text = "".join(ch for ch in text if unicodedata.category(ch)[0]!="C")
-
-    # Removes feature tags such as [S], [S,SL], [AD] and [HD]
-    text = re.sub(r'\[[A-Z,]+\]', '', text)
-
-    # Removes season/episode information
-    text = re.sub(r'\(?[SE]?\d+\s?Ep\s?\d+[\d/]*\)?', '', text)
-
-    return text.strip()
-
-yesterdayDateUTC = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)).date()
-def is_new_episode(originalAirDate: datetime):
-    if originalAirDate is None:
-        return False
+def setup_logging(debug_mode: str) -> None:
+    """Configure logging based on debug mode."""
+    log_level = logging.INFO
+    if debug_mode.lower() == "full":
+        log_level = logging.DEBUG
+    elif debug_mode.lower() == "off":
+        log_level = logging.WARNING
     
-    return originalAirDate.date() >= yesterdayDateUTC
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger(__name__)
+    return logger
 
-def log(type, text):
-    now = datetime.datetime.today()
-    if (type == "INFO" and (showlog_info == "on" or showlog_info == "full")) or (type == "DETAIL" and showlog_info == "full"):
-        print(type + " (" + str(now)[0:19] + "): " + text)
+def discover_device_auth(host: str) -> str:
+    """Discover HDHomeRun device auth."""
+    try:
+        logger.info("Fetching HDHomeRun Web API Device Auth")
+        with urllib.request.urlopen(f"http://{host}/discover.json") as response:
+            data = json.loads(response.read().decode())
+            for key in data:
+                if "DeviceAuth" in key:
+                    device_auth = data["DeviceAuth"]
+                    logger.info(f"Discovered device auth: {device_auth}")
+                    return device_auth
+        logger.error("No devices found")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"Error discovering device: {e}")
+        sys.exit(1)
 
-def log_error(text):
-    log("ERROR", text)
+def fetch_channels(host: str, device_auth: str) -> list:
+    """Fetch EPG channels from HDHomeRun device."""
+    channel_data = []
+    logger.info(f"Fetching HDHomeRun Web API Lineup for auth {device_auth}")
+    url = f"http://{host}/lineup.json"
+    with urllib.request.urlopen(url) as response:
+        channel_data = json.loads(response.read().decode())
 
-def log_info(text):
-    log("INFO", text)
+    return channel_data
 
-def log_detail(text):
-    log("DETAIL", text)
+def fetch_epg_data(device_auth: str, channels: str, days: int, hours: int) -> list:
+    """Fetch EPG data for a specific channel via POST to HDHomeRun API."""
+    epg_data = {}
+    epg_data["channels"] = []
+    epg_data["programmes"] = []
+    url = f"https://my.hdhomerun.com/api/guide.php?DeviceAuth={device_auth}"
+    # Start with the now
+    next_start_date = datetime.datetime.now(pytz.UTC)
+    # End with the desired number of days
+    end_time = next_start_date + datetime.timedelta(days=days)
+    # Here HDHomeRun supplies a mass of info but that doesn't seem necessary
+    data = {"AppName":"HDHomeRun","AppVersion":"20241007","DeviceAuth":device_auth,"Platform":"WINDOWS","PlatformInfo":{"Vendor":"Web"}}
+    url_data = urllib.parse.urlencode(data).encode()
+    
+    try:
+        while next_start_date < end_time:
+            url_start_date = int(next_start_date.timestamp())
+            context = ssl._create_unverified_context()  # Match original SSL behavior
+            req = urllib.request.Request(f"{url}&Start={url_start_date}", data=url_data, method="POST")
+            req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+            logger.debug(f"Fetching EPG for all channels starting {next_start_date} from {url}")
+            with urllib.request.urlopen(req, context=context) as response:
+                epg_segment = json.loads(response.read().decode())
+                logger.info(f"Processing from {next_start_date.strftime("%Y-%m-%d %H:%M:%S")}")
+                for channel_epg_segment in epg_segment:
+                    programmes = channel_epg_segment["Guide"]
+                    for programme in programmes:
+                        channel = next((ch for ch in channels if ch.get("GuideNumber") == channel_epg_segment["GuideNumber"]), None)
+                        # Check if the epg program channel is within our tuned channel list
+                        if channel == None:
+                            logger.debug(f"Skipping program for untuned channel {channel_epg_segment['GuideNumber']}")
+                            continue
+                        # Check if the epg program has already been retrieved due to overlapping requests
+                        if any(epg["StartTime"] == programme["StartTime"] and epg["Title"] == programme["Title"] and epg["GuideNumber"] == channel_epg_segment["GuideNumber"] for epg in epg_data["programmes"]):
+                            logger.debug(f"Skipping duplicate program {programme['Title']} starting at {programme["StartTime"]}")
+                            continue
+                        epg_channel = next((ch for ch in epg_data["channels"] if ch.get("GuideNumber") == channel_epg_segment["GuideNumber"]), None)
+                        if epg_channel == None:
+                            channel["ImageURL"] = channel_epg_segment.get("ImageURL", "")
+                            epg_data["channels"].append(channel)
+                        programme["GuideNumber"] = channel_epg_segment["GuideNumber"]
+                        logger.debug(f"Appending: {programme["Title"]} from {str(programme["StartTime"])} to {str(programme["EndTime"])}")
+                        epg_data["programmes"].append(programme)
+            next_start_date += datetime.timedelta(hours=hours)
+        return epg_data
+    except Exception as e:
+        logger.error(f"Error fetching EPG for all channels for start time {next_start_date}: {e}")
+        return epg_data
+    
+def create_xmltv_channel(channel_data: dict, xmltv_root: ET.Element) -> None:
+    """Create XMLTV channel element according to DTD."""
+    channel = ET.SubElement(xmltv_root, "channel", id=channel_data.get("GuideNumber", ""))
+    ET.SubElement(channel, "display-name").text = channel_data.get("GuideName", "Unknown")
+    ET.SubElement(channel, "icon", src=channel_data["ImageURL"])
+    logger.debug(f"Created channel: {channel_data.get('GuideName', 'Unknown')}")
 
-# Set up all the command line parameters
-parser = argparse.ArgumentParser(add_help=False, description="Program to download the HDHomeRun device EPG and convert it to an XMLTV format suitable for Jellyfin.")
-parser.add_argument("--help", action="store_true", help="Show the command parameters available.")
-parser.add_argument("--host", help="The host name or IP address of the HDHomeRun server if different from \"hdhomerun.local\".")
-parser.add_argument("--filename", help="The file path and name of the EPG to be generated. Defaults to epg.xml in the current directory.")
-parser.add_argument("--days", help="The number of days in the future from now to obtain an EPG for. Defaults to 7 but will be restricted to a max of about 14 by the HDHomeRun device.")
-parser.add_argument("--hours", help="The number of hours of guide interation to obtain. Defaults to 3 hours.")
-parser.add_argument("--debug", help="Switch debug log message on, options are \"on\", \"full\" or \"off\". Defaults to \"on\"")
-showHelp = False
-try:
+def create_xmltv_programme(programme_data: dict, channel_number: str, xmltv_root: ET.Element) -> None:
+    """Create XMLTV programme element according to DTD."""
+    try:
+        start_time = datetime.datetime.fromtimestamp(programme_data["StartTime"], tz=pytz.UTC).astimezone(LOCAL_TZ)
+        duration = programme_data.get("EndTime", programme_data["StartTime"]) - programme_data["StartTime"]
+        end_time = start_time + datetime.timedelta(seconds=duration)
+        
+        programme = ET.SubElement(
+            xmltv_root,
+            "programme",
+            start=start_time.strftime("%Y%m%d%H%M%S %z"),
+            stop=end_time.strftime("%Y%m%d%H%M%S %z"),
+            channel=channel_number
+        )
+        
+        # NOTE: All key XMLTV elements are added below in DTD order, not all are used due to HDHomeRun data limitations.
+        # <title>
+        ET.SubElement(programme, "title", lang="en").text = programme_data.get("Title")
+        # <sub-title>
+        if "EpisodeTitle" in programme_data:
+            ET.SubElement(programme, "sub-title", lang="en").text = programme_data["EpisodeTitle"]
+        # <desc>
+        if "Synopsis" in programme_data:
+            ET.SubElement(programme, "desc", lang="en").text = programme_data["Synopsis"]
+        # <desc> - Could add another for a short description
+        # <credits>
+        # <date>
+        if "Filter" in programme_data:
+            for filter in programme_data["Filter"]:
+                ET.SubElement(programme, "category", lang="en").text = filter
+        # <keyword>
+        # <language>
+        # <orig-language>
+        # <length units="minutes">60</keyword>
+        # <icon>
+        if "ImageURL" in programme_data:
+            ET.SubElement(programme, "icon", src=programme_data["ImageURL"])
+        # <url>
+        # <country>
+        # <episode-num system="xmltv_ns">1.0.0/0</episode-num>
+        if "EpisodeNumber" in programme_data:
+            try:
+                episode_number = programme_data["EpisodeNumber"]
+                if "S" in episode_number and "E" in episode_number:
+                    series = int(episode_number[episode_number.index("S") + 1:episode_number.index("E")]) - 1
+                    episode = int(episode_number[episode_number.index("E") + 1:]) - 1
+                ET.SubElement(programme, "episode-num", system="onscreen").text = episode_number
+                ET.SubElement(programme, "episode-num", system="xmltv_ns").text = f"{series}.{episode}.0/0" # Assuming 0 for part
+            except (ValueError, TypeError):
+                logger.warning(f"Invalid Series/Episode data for {programme_data.get('Title')}")
+        # <video>
+        # <audio>
+        # <previously-shown>
+        if "OriginalAirdate" in programme_data:
+            air_date = datetime.datetime.fromtimestamp(programme_data["OriginalAirdate"], tz=pytz.UTC).astimezone(LOCAL_TZ)
+            start_date = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
+            if air_date != start_date:
+                ET.SubElement(programme, "previously-shown").set("start", air_date.strftime("%Y%m%d%H%M%S"))
+            elif "First" in programme_data and programme_data["First"] != True:
+                ET.SubElement(programme, "previously-shown")
+        # <new>
+        if "First" in programme_data and programme_data["First"] == True:
+            ET.SubElement(programme, "new")
+        # <subtitles>
+        logger.debug(f"Created programme: {programme_data.get('Title')}")
+    except Exception as e:
+        logger.error(f"Error creating programme for {programme_data.get('Title', 'unknown')}: {e}")
+
+def generate_xmltv(host: str, days: int, hours: int, filename: str) -> None:
+    """Generate XMLTV file from HDHomeRun EPG data."""
+    # Initialize XMLTV root
+    xmltv_root = ET.Element("tv")
+    xmltv_root.set("source-info-name", "HDHomeRun")
+    xmltv_root.set("generator-info-name", "HDHomeRunEPG_to_XmlTv")
+    
+    # Discover device authentication
+    device_auth = discover_device_auth(host)
+
+    # Fetch channel list
+    channels = fetch_channels(host, device_auth)
+    if not channels:
+        logger.error("No channels retrieved. Exiting.")
+        sys.exit(1)
+
+    # Fetch EPG data for all channels
+    logger.info("HDHomeRun RPG Extraction Started")
+    epg_data = fetch_epg_data(device_auth, channels, days, hours)
+    logger.info("HDHomeRun RPG Extraction Completed")
+
+    # Create the xmltv list of channels and programmes
+    logger.info("HDHomeRun XMLTV Transformation Started")
+    for guide_channel in epg_data.get("channels", []):
+        create_xmltv_channel(guide_channel, xmltv_root)
+    for guide_channel in epg_data.get("channels", []):
+        guide_number = guide_channel.get("GuideNumber", "")
+        for guide_programme in epg_data.get("programmes", []):
+            if guide_programme.get("GuideNumber") == guide_number:
+                create_xmltv_programme(guide_programme, guide_number, xmltv_root)
+    logger.info("HDHomeRun XMLTV Transformation Completed")
+    
+    # Write to XML file
+    try:
+        logger.info("Writing XMLTV to file " + filename + " Started")
+        tree = ET.ElementTree(xmltv_root)
+        ET.indent(tree, space="\t", level=0)
+        tree.write(filename, encoding="UTF-8", xml_declaration=True)
+        logger.info(f"Writing XMLTV to file {filename} Completed")
+    except Exception as e:
+        logger.error(f"Error writing XML file: {e}")
+        sys.exit(1)
+        
+def main():
+    """Main function to parse arguments and generate XMLTV file."""
+    parser = argparse.ArgumentParser(
+        add_help=False,
+        description="Program to download the HDHomeRun device EPG and convert it to an XMLTV format suitable for Jellyfin."
+    )
+    parser.add_argument("--help", action="store_true", help="Show the command parameters available.")
+    parser.add_argument("--host", default="hdhomerun.local", help="The host name or IP address of the HDHomeRun server if different from \"hdhomerun.local\".")
+    parser.add_argument("--filename", default="epg.xml", help="The file path and name of the EPG to be generated. Defaults to epg.xml in the current directory.")
+    parser.add_argument("--days", type=int, default=7, help="The number of days in the future from now to obtain an EPG for. Defaults to 7 but will be restricted to a max of about 14 by the HDHomeRun device.")
+    parser.add_argument("--hours", type=int, default=3, help="The number of hours of guide interation to obtain. Defaults to 3 hours.")
+    parser.add_argument("--debug", default="on", help="Switch debug log message on, options are \"on\", \"full\" or \"off\". Defaults to \"on\"")
+    
     args = parser.parse_args()
-except:
-    showHelp = True
-if (showHelp or args.help):
-    parser.print_help()
-    sys.exit(0)
-if (args.host != None):
-    urlHost = args.host
-if (args.filename != None):
-    epgFilename = args.filename
-if (args.days != None):
-    scheduleDurationInDays = int(args.days)
-if (args.hours != None):
-    hoursIncrement = int(args.hours)
-if (args.debug != None and args.debug.lower() == "on"):
-    showlog_info = "on"
-if (args.debug != None and args.debug.lower() == "off"):
-    showlog_info = "off"
-if (args.debug != None and args.debug.lower() == "full"):
-    showlog_info = "full"
-
-# Construct the HDHomeRun info Url's
-deviceUrl = "http://" + urlHost + "/discover.json"
-lineUpUrl = "http://" + urlHost + "/lineup.json"
-
-log_info("---------- Fetching HDHomeRun Web API Device Auth ----------")
-
-# Set up the session with the custom TLS 1.2 adapter
-session = requests.Session()
-session.mount("https://", TLS12Adapter())
-
-# Get DeviceAuth the HDHomeRun device info
-deviceResp = requests.get(deviceUrl)
-if deviceResp.status_code != 200:
-    log_info("Device infor request failed: (" + deviceResp.status_code + ") " + deviceResp.reason)
-    sys.exit()
-deviceJson = deviceResp.json()
-deviceAuth = deviceJson["DeviceAuth"]
-
-log_info("---------- Fetching HDHomeRun Web API Lineup ----------")
-
-# Get the HDHomeRun channel line up info
-lineUpResp = requests.get(lineUpUrl)
-if lineUpResp.status_code != 200:
-    log_info("Device infor request failed: (" + lineUpResp.status_code + ") " + lineUpResp.reason)
-    sys.exit()
-lineUpJson = lineUpResp.json()
-
-log_info("---------- HDHomeRun RPG Extraction Started ----------")
-
-# Prepare to process the HDHomeRun Guide
-timestamp1Day = 86400
-timestampIncrementHrs = (timestamp1Day / 24) * hoursIncrement
-nextTimestamp = int(datetime.datetime.today().timestamp())
-maxTimestamp = int((datetime.datetime.today() + datetime.timedelta(days = scheduleDurationInDays)).timestamp())
-guideData = {"AppName":"HDHomeRun","AppVersion":"20241007","DeviceAuth":deviceAuth,"Platform":"WINDOWS","PlatformInfo":{"Vendor":"Web"}}
-guideHeader = {"Cache-Control":"no-cache","Content-Type":"multipart/form-data","Accept-Encoding":"gzip, deflate, br","User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; WebView/3.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.22631"}
-
-# Begin the EPG extraction from the HDHomeRun device
-guideResp = session.post("https://api.hdhomerun.com/api/guide?DeviceAuth=" + deviceAuth + "&SynopsisLength=160", headers=guideHeader, data=guideData)
-if guideResp.status_code != 200:
-    log_info("HDHomeRun guide request failed: (" + guideResp.status_code + ") " + guideResp.reason)
-    sys.exit()
-
-baseGuideJson = guideResp.json()
-
-nextTimestamp = int(nextTimestamp + timestampIncrementHrs)
-
-# Loop for the next 6 days guide
-while nextTimestamp <= maxTimestamp:
     
-    log_info("--> Processing from (" + str(nextTimestamp) + ") " + str(datetime.datetime.fromtimestamp(nextTimestamp)))
-
-    guideResp = session.post("https://api.hdhomerun.com/api/guide?DeviceAuth=" + deviceAuth + "&SynopsisLength=160&Start=" + str(nextTimestamp), headers=guideHeader, data=guideData)
-    if guideResp.status_code != 200:
-        log_info("HDHomeRun guide request failed: (" + guideResp.status_code + ") " + guideResp.reason)
-        sys.exit()
-
-    reqGuideJson = guideResp.json()
-
-    if reqGuideJson == None:
-        break
+    if args.help:
+        parser.print_help()
+        sys.exit(0)
     
-    for reqChannel in reqGuideJson:
-
-        channelText = reqChannel["GuideName"]
-        if "Affiliate" in reqChannel:
-            channelText = reqChannel["Affiliate"]
-
-        log_detail("----> Processing channel: " + reqChannel["GuideNumber"] + " - " + channelText)
-
-        baseChannel = {}
-        for srchChannel in baseGuideJson:
-            if srchChannel["GuideNumber"] == reqChannel["GuideNumber"]:
-                baseChannel = srchChannel
-                break
+    global logger
+    logger = setup_logging(args.debug)
     
-        if baseChannel != {}:
+    generate_xmltv(args.host, args.days, args.hours, args.filename)
 
-            for reqGuideItem in reqChannel["Guide"]:
+# Initialize local timezone with fallback to UTC
+try:
+    LOCAL_TZ = get_localzone()
+except Exception as e:
+    logger.warning(f"Could not detect local timezone: {e}. Falling back to UTC.")
+    LOCAL_TZ = pytz.UTC
 
-                newGuideItem = {}
-                for baseGuideItem in baseChannel["Guide"]:
-                    if baseGuideItem["StartTime"] == reqGuideItem["StartTime"]:
-                        newGuideItem = baseGuideItem
-                        break
-
-                if newGuideItem == {}:
-                    baseChannel["Guide"].append(reqGuideItem)
-                    log_detail("------> Appending: " + reqGuideItem["Title"] + " from " + str(reqGuideItem["StartTime"]) + " to " + str(reqGuideItem["EndTime"]))
-
-    nextTimestamp = int(nextTimestamp + timestampIncrementHrs)
-
-log_info("---------- HDHomeRun RPG Extraction Completed ----------")
-
-log_info("---------- HDHomeRun XMLTV Transformation Started ----------")
-
-tv = ET.Element("tv")
-tv.set("generator-info-name", "HDHomeRun")
-tv.set("generator-info-url", deviceUrl)
-
-# Scan through all Channels adding them to the XML document
-for reqChannel in baseGuideJson:
-
-    # Channel
-    channel = ET.SubElement(tv, "channel")
-    channel.set("id", reqChannel["GuideNumber"])
-
-    # Channel name
-    guideName = reqChannel["GuideName"]
-    for reqLineUp in lineUpJson:
-        if reqLineUp["GuideNumber"] == reqChannel["GuideNumber"]:
-            guideName = reqLineUp["GuideName"]
-            break
-
-    channelName = ET.SubElement(channel, "display-name")
-    channelName.set("lang", "en")
-    channelName.text = guideName
-
-    # Channel logo url
-    if "ImageURL" in reqChannel:
-        channelLogo = ET.SubElement(channel, "icon")
-        channelLogo.set("src", reqChannel["ImageURL"])
-        channelLogo.text = ""
-
-# Scan through all Programmes adding them to the XML document
-for reqChannel in baseGuideJson:
-    for reqGuide in reqChannel["Guide"]:
-
-        # Programme
-        programme = ET.SubElement(tv, "programme")
-        startTime = datetime.datetime.fromtimestamp(reqGuide["StartTime"]).astimezone().strftime("%Y%m%d%H%M%S %z")
-        endTime = datetime.datetime.fromtimestamp(reqGuide["EndTime"]).astimezone().strftime("%Y%m%d%H%M%S %z") 
-        programme.set("channel", reqChannel["GuideNumber"])
-        programme.set("start", startTime)
-        programme.set("stop", endTime)
-
-        # Programme title
-        title = ET.SubElement(programme, "title")
-        title.set('lang', 'en')
-        title.text = reqGuide["Title"]
-
-        # Programme description
-        if "Synopsis" in reqGuide:
-            description = ET.SubElement(programme, "desc")
-            description.set('lang', 'en')
-            description.text = clean_text(reqGuide["Synopsis"])
-
-        if "EpisodeTitle" in reqGuide:
-            episodeTitle = ET.SubElement(programme, "sub-title")
-            episodeTitle.set("lang", "en")
-            episodeTitle.text = reqGuide["EpisodeTitle"]
-
-        # Programme icon
-        if "ImageURL" in reqGuide:
-            icon = ET.SubElement(programme, "icon")
-            icon.set("src", reqGuide["ImageURL"])
-
-        # Programme series/episode detail
-        if "EpisodeNumber" in reqGuide:
-            episodeNumber = reqGuide["EpisodeNumber"]
-            if "S" in episodeNumber and "E" in episodeNumber:
-                seriesNo = int(episodeNumber[episodeNumber.index("S") + 1:episodeNumber.index("E")]) - 1
-                episodeNo = int(episodeNumber[episodeNumber.index("E") + 1:]) - 1
-                episode = ET.SubElement(programme, "episode-num")
-                episode.set("system", "xmltv_ns")
-                episode.text = "{Series}.{Episode}.0".format(Series=seriesNo, Episode=episodeNo)
-            else:
-                log_error("Enable to process episode")
-            episodeOS = ET.SubElement(programme, "episode-num")
-            episodeOS.set("system", "onscreen")
-            episodeOS.text = episodeNumber
-
-            if "OriginalAirdate" in reqGuide:
-                originalAirDate = reqGuide["OriginalAirdate"]
-                airDate = datetime.datetime.fromtimestamp(originalAirDate).astimezone(datetime.timezone.utc)
-                if is_new_episode(airDate):
-                    ET.SubElement(programme, "new")
-                else:
-                    episodePS = ET.SubElement(programme, "previously-shown")
-                    episodePS.set("start", airDate.strftime("%Y%m%d%H%M%S"))
-            else:
-                ET.SubElement(programme, "previously-shown") # No original air date provided, assuming it aired before 1970
-
-        if "Filter" in reqGuide:
-            for filter in reqGuide["Filter"]:
-                category = ET.SubElement(programme, "category")
-                category.set("lang", "en")
-                category.text = filter
-
-log_info("---------- HDHomeRun XMLTV Transformation Completed ----------")
-
-log_info("---------- Writing XMLTV to file " + epgFilename + " Started ----------")
-
-# Create the XMLTV file
-data = ET.ElementTree(tv).write(epgFilename, encoding='utf-8')
-
-log_info("---------- Writing XMLTV to file " + epgFilename + " Completed ----------")
+if __name__ == "__main__":
+    main()

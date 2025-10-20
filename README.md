@@ -3,18 +3,23 @@
 <a href="https://buymeacoffee.com/incubusvictim" target="_blank"><img align="top" src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a> <img align="top" src="https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/blob/main/bmc_qr.png" width="100" />
 </div>
 
-## Acknowledgments
+## Fixes and Acknowledgments
 
-Thanks to the following contributors for their support:
-
-- [@supitsmike](https://github.com/supitsmike) – Fixed issue [#5](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/5): EPG - All programs listed as "New"
-- [@AcSlayter](https://github.com/acslayter) – Added docker support
+[#5](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/5) - Many thanks to [@supitsmike] for fixing the bug where all episodes were showing as "New".<br/>
+[#7](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/7) - Add the <new /> to help with NEXTPVR intepretting a new show correctly.<br/>
+[#13](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/13) - Manys thanks to [@AcSlayter] for adding docker support.<br/>
+[#14](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/14) - Many thanks to [@Sujeom] for fixing the status handling bug.<br/>
+[#10](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/10) - The re-vamp in v2 has re-arranged all XMLTV elements to match the DTD more closely.<br/>
+[#11](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/11) - The re-vamp in v2 has allowed me to attempt the location timezone detection properly.<br/>
+[#12](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/12) - The re-vamp in v2 corrects the formatting of the XMLTV so it no longer is on a single line.<br/>
 
 ## Features
 
-A Python program to download the current EPG from an HDHomeRun Quattro box for the next 7 days and convert this into an XMLTV formatted file.
+A Python program to download the current EPG from an HDHomeRun Quattro box for the next 7 days and convert this into an XMLTV formatted file.  This should work with some other HDHomeRun models and you may possibly be able to get 14 days of EPG data, but I have only tested with the Quattro.
 
-I developed this so I could easily update the EPG on a Jellyfin media server that was linked to an HDHomeRun Quattro.  The HDHomeRun Quattro hardware can automatically provide the EPG for HDHomeRun application, so it made sense to use this as it is a perfect match for the channels used by Jellyfin.  I personally schedule it to run on a nightly basis at 1am shortly after which Jellyfin is scheduled to update its EPG from the newly generated XMLTV file.
+I developed this so I could easily update the EPG on a Jellyfin media server that was linked to an HDHomeRun Quattro.  The HDHomeRun Quattro hardware automatically maintains the EPG for the channels it has tuned in, so it made sense to use this.
+
+<i><b>Version 2 Notes:</b> This is a re-vamp of the original v1 code to fix a number of bugs, but primarily to produce a more professional piece of code now that I have more experience with Python.</i>
 
 <i><b>NOTE 1:</b> The Binaries I have generated are purely for those that are not comfortable running the Python application.  All of the binaries run on my local hardware and virtual machines, but if you have any problems please send me a message and I will try my best to help out.</i>
 
@@ -69,7 +74,9 @@ The following are obvious packages I needed to install to get this running:
 
 ```
 pip3 install argparse
+pip3 install pytz
 pip3 install requests
+pip3 install tzlocal
 ```
 
 ### Running the HDHomeRunEPG_To_XmlTv Python app
@@ -119,6 +126,7 @@ To run the Mac OS binary from a terminal window, put yourself in the binaries di
 ```
 .\HDHomeRunEPG_To_XmlTv --host 192.168.1.100
 ```
+
 # Docker Usage
 
 You can run this project using Docker. Here are the steps:
