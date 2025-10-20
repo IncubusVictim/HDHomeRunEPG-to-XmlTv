@@ -119,7 +119,7 @@ If this fails and you need to make the HDHomeRunEPG_To_XmlTv runnable, type in t
 chmod 755 HDHomeRunEPG_To_XmlTv
 ```
 
-### Windows (#7 Tested)
+### Windows (#14 Tested)
 
 To run the Mac OS binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
 
