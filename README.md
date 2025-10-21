@@ -74,15 +74,10 @@ pip3 --version
 
 ### Install HDHomeRunEPG_To_XmlTv Python packages
 
-Install any packages that you do not have already installed. When you run the Python program it will complain about a missing package.
-
-The following are obvious packages I needed to install to get this running:
+Requirements are listed in the requirements.txt file. These can be installed using the following command:
 
 ```
-pip3 install argparse
-pip3 install pytz
-pip3 install requests
-pip3 install tzlocal
+pip -r requirements.txt
 ```
 
 ### Running the HDHomeRunEPG_To_XmlTv Python app
