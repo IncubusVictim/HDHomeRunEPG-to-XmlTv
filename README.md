@@ -3,6 +3,12 @@
 <a href="https://buymeacoffee.com/incubusvictim" target="_blank"><img align="top" src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a> <img align="top" src="https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/blob/main/bmc_qr.png" width="100" />
 </div>
 
+## IMPORTANT NOTICE: on '403 Forbidden' error
+
+If you get this you are probably being blocked by HDHomeRun.  Either there system has been abused and they've put a stop to it or just don't want to be friendly to people that use there hardware with other software like Jellyfin or Ples, which is the whole purpose of the hardware.
+
+So shame on you HDHomeRun if that is the case.
+
 ## Fixes and Acknowledgments
 
 [#5](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/5) - Many thanks to [@supitsmike] for fixing the bug where all episodes were showing as "New".<br/>
@@ -44,7 +50,7 @@ To run the Python application as described in the [Usage](#usage) section above,
 
 ### Install Python
 
-Install Python onto your platform if it is not already available and ensure you can execute the following from you terminal/command/Powershell window:
+Install Python 3.6 or above onto your platform if it is not already available and ensure you can execute the following from you terminal/command/Powershell window:
 
 ```
 python --version
