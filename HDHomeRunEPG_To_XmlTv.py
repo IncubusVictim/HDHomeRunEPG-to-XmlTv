@@ -9,6 +9,7 @@ import sys
 from tzlocal import get_localzone
 import urllib.request
 import xml.etree.ElementTree as ET
+import gzip
 
 __author__ = "Incubus Victim"
 __credits__ = ["Incubus Victim"]
@@ -59,11 +60,11 @@ def fetch_channels(host: str, device_auth: str) -> list:
     return channel_data
 
 def fetch_epg_data(device_auth: str, channels: str, days: int, hours: int) -> list:
-    """Fetch EPG data for a specific channel via POST to HDHomeRun API."""
+    """Fetch EPG data for a specific channel via GET to HDHomeRun API."""
     epg_data = {}
     epg_data["channels"] = []
     epg_data["programmes"] = []
-    url = f"https://my.hdhomerun.com/api/guide.php?DeviceAuth={device_auth}"
+    url = f"https://api.hdhomerun.com/api/guide.php?DeviceAuth={device_auth}"
     # Start with the now
     next_start_date = datetime.datetime.now(pytz.UTC)
     # End with the desired number of days
@@ -76,11 +77,12 @@ def fetch_epg_data(device_auth: str, channels: str, days: int, hours: int) -> li
         while next_start_date < end_time:
             url_start_date = int(next_start_date.timestamp())
             context = ssl._create_unverified_context()  # Match original SSL behavior
-            req = urllib.request.Request(f"{url}&Start={url_start_date}", data=url_data, method="POST")
+            req = urllib.request.Request(f"{url}&Start={url_start_date}", data=url_data, method="GET")
             req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+            req.add_header("Accept-Encoding", "gzip")
             logger.debug(f"Fetching EPG for all channels starting {next_start_date} from {url}")
             with urllib.request.urlopen(req, context=context) as response:
-                epg_segment = json.loads(response.read().decode())
+                epg_segment = json.loads( gzip.decompress(response.read()))
                 logger.info(f"Processing from {next_start_date.strftime("%Y-%m-%d %H:%M:%S")}")
                 for channel_epg_segment in epg_segment:
                     programmes = channel_epg_segment["Guide"]
