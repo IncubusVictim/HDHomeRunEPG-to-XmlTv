@@ -24,7 +24,7 @@ def setup_logging(debug_mode: str) -> None:
         log_level = logging.DEBUG
     elif debug_mode.lower() == "off":
         log_level = logging.WARNING
-    
+
     logging.basicConfig(
         level=log_level,
         format='%(asctime)s - %(levelname)s - %(message)s'
@@ -72,7 +72,7 @@ def fetch_epg_data(device_auth: str, channels: str, days: int, hours: int) -> li
     # Here HDHomeRun supplies a mass of info but that doesn't seem necessary
     data = {"AppName":"HDHomeRun","AppVersion":"20241007","DeviceAuth":device_auth,"Platform":"WINDOWS","PlatformInfo":{"Vendor":"Web"}}
     url_data = urllib.parse.urlencode(data).encode()
-    
+
     try:
         while next_start_date < end_time:
             url_start_date = int(next_start_date.timestamp())
@@ -83,7 +83,7 @@ def fetch_epg_data(device_auth: str, channels: str, days: int, hours: int) -> li
             logger.debug(f"Fetching EPG for all channels starting {next_start_date} from {url}")
             with urllib.request.urlopen(req, context=context) as response:
                 epg_segment = json.loads( gzip.decompress(response.read()))
-                logger.info(f"Processing from {next_start_date.strftime("%Y-%m-%d %H:%M:%S")}")
+                logger.info(f"Processing from {next_start_date.strftime('%Y-%m-%d %H:%M:%S')}")
                 for channel_epg_segment in epg_segment:
                     programmes = channel_epg_segment["Guide"]
                     for programme in programmes:
@@ -94,21 +94,21 @@ def fetch_epg_data(device_auth: str, channels: str, days: int, hours: int) -> li
                             continue
                         # Check if the epg program has already been retrieved due to overlapping requests
                         if any(epg["StartTime"] == programme["StartTime"] and epg["Title"] == programme["Title"] and epg["GuideNumber"] == channel_epg_segment["GuideNumber"] for epg in epg_data["programmes"]):
-                            logger.debug(f"Skipping duplicate program {programme['Title']} starting at {programme["StartTime"]}")
+                            logger.debug(f"Skipping duplicate program {programme['Title']} starting at {programme['StartTime']}")
                             continue
                         epg_channel = next((ch for ch in epg_data["channels"] if ch.get("GuideNumber") == channel_epg_segment["GuideNumber"]), None)
                         if epg_channel == None:
                             channel["ImageURL"] = channel_epg_segment.get("ImageURL", "")
                             epg_data["channels"].append(channel)
                         programme["GuideNumber"] = channel_epg_segment["GuideNumber"]
-                        logger.debug(f"Appending: {programme["Title"]} from {str(programme["StartTime"])} to {str(programme["EndTime"])}")
+                        logger.debug(f"Appending: {programme['Title']} from {str(programme['StartTime'])} to {str(programme['EndTime'])}")
                         epg_data["programmes"].append(programme)
             next_start_date += datetime.timedelta(hours=hours)
         return epg_data
     except Exception as e:
         logger.error(f"Error fetching EPG for all channels for start time {next_start_date}: {e}")
         return epg_data
-    
+
 def create_xmltv_channel(channel_data: dict, xmltv_root: ET.Element) -> None:
     """Create XMLTV channel element according to DTD."""
     channel = ET.SubElement(xmltv_root, "channel", id=channel_data.get("GuideNumber", ""))
@@ -122,7 +122,7 @@ def create_xmltv_programme(programme_data: dict, channel_number: str, xmltv_root
         start_time = datetime.datetime.fromtimestamp(programme_data["StartTime"], tz=pytz.UTC).astimezone(LOCAL_TZ)
         duration = programme_data.get("EndTime", programme_data["StartTime"]) - programme_data["StartTime"]
         end_time = start_time + datetime.timedelta(seconds=duration)
-        
+
         programme = ET.SubElement(
             xmltv_root,
             "programme",
@@ -130,7 +130,7 @@ def create_xmltv_programme(programme_data: dict, channel_number: str, xmltv_root
             stop=end_time.strftime("%Y%m%d%H%M%S %z"),
             channel=channel_number
         )
-        
+
         # NOTE: All key XMLTV elements are added below in DTD order, not all are used due to HDHomeRun data limitations.
         # <title>
         ET.SubElement(programme, "title", lang="en").text = programme_data.get("Title")
@@ -190,7 +190,7 @@ def generate_xmltv(host: str, days: int, hours: int, filename: str) -> None:
     xmltv_root = ET.Element("tv")
     xmltv_root.set("source-info-name", "HDHomeRun")
     xmltv_root.set("generator-info-name", "HDHomeRunEPG_to_XmlTv")
-    
+
     # Discover device authentication
     device_auth = discover_device_auth(host)
 
@@ -215,7 +215,7 @@ def generate_xmltv(host: str, days: int, hours: int, filename: str) -> None:
             if guide_programme.get("GuideNumber") == guide_number:
                 create_xmltv_programme(guide_programme, guide_number, xmltv_root)
     logger.info("HDHomeRun XMLTV Transformation Completed")
-    
+
     # Write to XML file
     try:
         logger.info("Writing XMLTV to file " + filename + " Started")
@@ -226,7 +226,7 @@ def generate_xmltv(host: str, days: int, hours: int, filename: str) -> None:
     except Exception as e:
         logger.error(f"Error writing XML file: {e}")
         sys.exit(1)
-        
+
 def main():
     """Main function to parse arguments and generate XMLTV file."""
     parser = argparse.ArgumentParser(
@@ -239,16 +239,16 @@ def main():
     parser.add_argument("--days", type=int, default=7, help="The number of days in the future from now to obtain an EPG for. Defaults to 7 but will be restricted to a max of about 14 by the HDHomeRun device.")
     parser.add_argument("--hours", type=int, default=3, help="The number of hours of guide interation to obtain. Defaults to 3 hours.")
     parser.add_argument("--debug", default="on", help="Switch debug log message on, options are \"on\", \"full\" or \"off\". Defaults to \"on\"")
-    
+
     args = parser.parse_args()
-    
+
     if args.help:
         parser.print_help()
         sys.exit(0)
-    
+
     global logger
     logger = setup_logging(args.debug)
-    
+
     generate_xmltv(args.host, args.days, args.hours, args.filename)
 
 # Initialize local timezone with fallback to UTC
