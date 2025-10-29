@@ -151,7 +151,7 @@ guideHeader = {"Cache-Control":"no-cache","Content-Type":"multipart/form-data","
 # Begin the EPG extraction from the HDHomeRun device
 guideResp = session.post("https://api.hdhomerun.com/api/guide?DeviceAuth=" + deviceAuth + "&SynopsisLength=160", headers=guideHeader, data=guideData)
 if guideResp.status_code != 200:
-    log_info("HDHomeRun guide request failed: (" + guideResp.status_code + ") " + guideResp.reason)
+    log_info("HDHomeRun guide request failed: (" + str(guideResp.status_code) + ") " + guideResp.reason)
     sys.exit()
 
 baseGuideJson = guideResp.json()
@@ -165,7 +165,7 @@ while nextTimestamp <= maxTimestamp:
 
     guideResp = session.post("https://api.hdhomerun.com/api/guide?DeviceAuth=" + deviceAuth + "&SynopsisLength=160&Start=" + str(nextTimestamp), headers=guideHeader, data=guideData)
     if guideResp.status_code != 200:
-        log_info("HDHomeRun guide request failed: (" + guideResp.status_code + ") " + guideResp.reason)
+        log_info("HDHomeRun guide request failed: (" + str(guideResp.status_code) + ") " + guideResp.reason)
         sys.exit()
 
     reqGuideJson = guideResp.json()
