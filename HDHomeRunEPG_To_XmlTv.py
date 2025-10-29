@@ -35,24 +35,24 @@ def discover_device_auth(host: str) -> str:
     """Discover HDHomeRun device auth."""
     try:
         logger.info("Fetching HDHomeRun Web API Device Auth")
-        with urllib.request.urlopen(f"http://{host}/discover.json") as response:
+        with urllib.request.urlopen("http://%s/discover.json" % host) as response:
             data = json.loads(response.read().decode())
             for key in data:
                 if "DeviceAuth" in key:
                     device_auth = data["DeviceAuth"]
-                    logger.info(f"Discovered device auth: {device_auth}")
+                    logger.info("Discovered device auth: %s" % device_auth)
                     return device_auth
         logger.error("No devices found")
         sys.exit(1)
     except Exception as e:
-        logger.error(f"Error discovering device: {e}")
+        logger.error("Error discovering device: %s" % e)
         sys.exit(1)
 
 def fetch_channels(host: str, device_auth: str) -> list:
     """Fetch EPG channels from HDHomeRun device."""
     channel_data = []
-    logger.info(f"Fetching HDHomeRun Web API Lineup for auth {device_auth}")
-    url = f"http://{host}/lineup.json"
+    logger.info("Fetching HDHomeRun Web API Lineup for auth %s" % device_auth)
+    url = "http://%s/lineup.json" % host
     with urllib.request.urlopen(url) as response:
         channel_data = json.loads(response.read().decode())
 
@@ -63,48 +63,48 @@ def fetch_epg_data(device_auth: str, channels: str, days: int, hours: int) -> li
     epg_data = {}
     epg_data["channels"] = []
     epg_data["programmes"] = []
-    url = f"https://my.hdhomerun.com/api/guide.php?DeviceAuth={device_auth}"
+    url = "https://my.hdhomerun.com/api/guide.php?DeviceAuth=%s" % device_auth
     # Start with the now
     next_start_date = datetime.datetime.now(pytz.UTC)
     # End with the desired number of days
     end_time = next_start_date + datetime.timedelta(days=days)
     # Here HDHomeRun supplies a mass of info but that doesn't seem necessary
-    data = {"AppName":"HDHomeRun","AppVersion":"20241007","DeviceAuth":device_auth,"Platform":"WINDOWS","PlatformInfo":{"Vendor":"Web"}}
+    data = {"AppName":"HDHomeRun","AppVersion":"20250815","DeviceAuth":device_auth,"Platform":"WINDOWS","PlatformInfo":{"Vendor":"Web"}}
     url_data = urllib.parse.urlencode(data).encode()
     
     try:
         while next_start_date < end_time:
             url_start_date = int(next_start_date.timestamp())
             context = ssl._create_unverified_context()  # Match original SSL behavior
-            req = urllib.request.Request(f"{url}&Start={url_start_date}", data=url_data, method="POST")
+            req = urllib.request.Request("%s&Start=%d" % (url, url_start_date), data=url_data, method="POST")
             req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-            logger.debug(f"Fetching EPG for all channels starting {next_start_date} from {url}")
+            logger.debug("Fetching EPG for all channels starting %s from %s" % (next_start_date, url))
             with urllib.request.urlopen(req, context=context) as response:
                 epg_segment = json.loads(response.read().decode())
-                logger.info(f"Processing from {next_start_date.strftime("%Y-%m-%d %H:%M:%S")}")
+                logger.info("Processing from %s" % next_start_date.strftime("%Y-%m-%d %H:%M:%S"))
                 for channel_epg_segment in epg_segment:
                     programmes = channel_epg_segment["Guide"]
                     for programme in programmes:
                         channel = next((ch for ch in channels if ch.get("GuideNumber") == channel_epg_segment["GuideNumber"]), None)
                         # Check if the epg program channel is within our tuned channel list
                         if channel == None:
-                            logger.debug(f"Skipping program for untuned channel {channel_epg_segment['GuideNumber']}")
+                            logger.debug("Skipping program for untuned channel %s" % channel_epg_segment['GuideNumber'])
                             continue
                         # Check if the epg program has already been retrieved due to overlapping requests
                         if any(epg["StartTime"] == programme["StartTime"] and epg["Title"] == programme["Title"] and epg["GuideNumber"] == channel_epg_segment["GuideNumber"] for epg in epg_data["programmes"]):
-                            logger.debug(f"Skipping duplicate program {programme['Title']} starting at {programme["StartTime"]}")
+                            logger.debug("Skipping duplicate program %s starting at %s" % (programme["Title"], programme["StartTime"]))
                             continue
                         epg_channel = next((ch for ch in epg_data["channels"] if ch.get("GuideNumber") == channel_epg_segment["GuideNumber"]), None)
                         if epg_channel == None:
                             channel["ImageURL"] = channel_epg_segment.get("ImageURL", "")
                             epg_data["channels"].append(channel)
                         programme["GuideNumber"] = channel_epg_segment["GuideNumber"]
-                        logger.debug(f"Appending: {programme["Title"]} from {str(programme["StartTime"])} to {str(programme["EndTime"])}")
+                        logger.debug("Appending: %s from %s to %s" % (programme["Title"], str(programme["StartTime"]), str(programme["EndTime"])))
                         epg_data["programmes"].append(programme)
             next_start_date += datetime.timedelta(hours=hours)
         return epg_data
     except Exception as e:
-        logger.error(f"Error fetching EPG for all channels for start time {next_start_date}: {e}")
+        logger.error("Error fetching EPG for all channels for start time %s: %s" % (next_start_date, e))
         return epg_data
     
 def create_xmltv_channel(channel_data: dict, xmltv_root: ET.Element) -> None:
@@ -112,7 +112,7 @@ def create_xmltv_channel(channel_data: dict, xmltv_root: ET.Element) -> None:
     channel = ET.SubElement(xmltv_root, "channel", id=channel_data.get("GuideNumber", ""))
     ET.SubElement(channel, "display-name").text = channel_data.get("GuideName", "Unknown")
     ET.SubElement(channel, "icon", src=channel_data["ImageURL"])
-    logger.debug(f"Created channel: {channel_data.get('GuideName', 'Unknown')}")
+    logger.debug("Created channel: %s" % channel_data.get('GuideName', 'Unknown'))
 
 def create_xmltv_programme(programme_data: dict, channel_number: str, xmltv_root: ET.Element) -> None:
     """Create XMLTV programme element according to DTD."""
@@ -161,9 +161,9 @@ def create_xmltv_programme(programme_data: dict, channel_number: str, xmltv_root
                     series = int(episode_number[episode_number.index("S") + 1:episode_number.index("E")]) - 1
                     episode = int(episode_number[episode_number.index("E") + 1:]) - 1
                 ET.SubElement(programme, "episode-num", system="onscreen").text = episode_number
-                ET.SubElement(programme, "episode-num", system="xmltv_ns").text = f"{series}.{episode}.0/0" # Assuming 0 for part
+                ET.SubElement(programme, "episode-num", system="xmltv_ns").text = "%d.%d.0/0" % (series, episode) # Assuming 0 for part
             except (ValueError, TypeError):
-                logger.warning(f"Invalid Series/Episode data for {programme_data.get('Title')}")
+                logger.warning("Invalid Series/Episode data for %s" % programme_data.get('Title'))
         # <video>
         # <audio>
         # <previously-shown>
@@ -178,9 +178,9 @@ def create_xmltv_programme(programme_data: dict, channel_number: str, xmltv_root
         if "First" in programme_data and programme_data["First"] == True:
             ET.SubElement(programme, "new")
         # <subtitles>
-        logger.debug(f"Created programme: {programme_data.get('Title')}")
+        logger.debug("Created programme: %s" % programme_data.get('Title'))
     except Exception as e:
-        logger.error(f"Error creating programme for {programme_data.get('Title', 'unknown')}: {e}")
+        logger.error("Error creating programme for %s: %s" % (programme_data.get('Title', 'unknown'), e))
 
 def generate_xmltv(host: str, days: int, hours: int, filename: str) -> None:
     """Generate XMLTV file from HDHomeRun EPG data."""
@@ -220,9 +220,9 @@ def generate_xmltv(host: str, days: int, hours: int, filename: str) -> None:
         tree = ET.ElementTree(xmltv_root)
         ET.indent(tree, space="\t", level=0)
         tree.write(filename, encoding="UTF-8", xml_declaration=True)
-        logger.info(f"Writing XMLTV to file {filename} Completed")
+        logger.info("Writing XMLTV to file %s Completed" % filename)
     except Exception as e:
-        logger.error(f"Error writing XML file: {e}")
+        logger.error("Error writing XML file: %s" % e)
         sys.exit(1)
         
 def main():
@@ -253,7 +253,7 @@ def main():
 try:
     LOCAL_TZ = get_localzone()
 except Exception as e:
-    logger.warning(f"Could not detect local timezone: {e}. Falling back to UTC.")
+    logger.warning("Could not detect local timezone: %s. Falling back to UTC." % e)
     LOCAL_TZ = pytz.UTC
 
 if __name__ == "__main__":
