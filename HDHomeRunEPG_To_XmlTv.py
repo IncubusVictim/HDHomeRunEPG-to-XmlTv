@@ -63,21 +63,17 @@ def fetch_epg_data(device_auth: str, channels: str, days: int, hours: int) -> li
     epg_data = {}
     epg_data["channels"] = []
     epg_data["programmes"] = []
-    url = "https://my.hdhomerun.com/api/guide.php?DeviceAuth=%s" % device_auth
+    url = "https://api.hdhomerun.com/api/guide.php?DeviceAuth=%s" % device_auth
     # Start with the now
     next_start_date = datetime.datetime.now(pytz.UTC)
     # End with the desired number of days
     end_time = next_start_date + datetime.timedelta(days=days)
-    # Here HDHomeRun supplies a mass of info but that doesn't seem necessary
-    data = {"AppName":"HDHomeRun","AppVersion":"20250815","DeviceAuth":device_auth,"Platform":"WINDOWS","PlatformInfo":{"Vendor":"Web"}}
-    url_data = urllib.parse.urlencode(data).encode()
     
     try:
         while next_start_date < end_time:
             url_start_date = int(next_start_date.timestamp())
             context = ssl._create_unverified_context()  # Match original SSL behavior
-            req = urllib.request.Request("%s&Start=%d" % (url, url_start_date), data=url_data, method="POST")
-            req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+            req = urllib.request.Request("%s&Start=%d" % (url, url_start_date))
             logger.debug("Fetching EPG for all channels starting %s from %s" % (next_start_date, url))
             with urllib.request.urlopen(req, context=context) as response:
                 epg_segment = json.loads(response.read().decode())
