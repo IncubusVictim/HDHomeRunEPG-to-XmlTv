@@ -50,7 +50,7 @@ To run the Python application as described in the [Usage](#usage) section above,
 
 ### Install Python
 
-Install Python 3.6 or above onto your platform if it is not already available and ensure you can execute the following from you terminal/command/Powershell window:
+Install Python 3.9 or above onto your platform if it is not already available and ensure you can execute the following from you terminal/command/Powershell window:
 
 ```
 python --version
