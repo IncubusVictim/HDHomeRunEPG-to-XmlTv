@@ -94,7 +94,7 @@ Please find a <b>binaries</b> directory in the repository root that contains a P
 
 ### Debian Linux (#7 Tested)
 
-To run the Mac OS binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
+To run the Debian Linux binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
 
 ```
 .\HDHomeRunEPG_To_XmlTv --host 192.168.1.100
@@ -122,7 +122,7 @@ chmod 755 HDHomeRunEPG_To_XmlTv
 
 ### Windows (#14 Tested)
 
-To run the Mac OS binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
+To run the Windows binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
 
 ```
 .\HDHomeRunEPG_To_XmlTv --host 192.168.1.100
