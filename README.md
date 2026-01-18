@@ -1,13 +1,12 @@
 # HDHomeRun EPG converter to XMLTV file
+
 <div align="right">
 <a href="https://buymeacoffee.com/incubusvictim" target="_blank"><img align="top" src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a> <img align="top" src="https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/blob/main/bmc_qr.png" width="100" />
 </div>
 
 ## IMPORTANT NOTICE: on '403 Forbidden' error
 
-If you get this you are probably being blocked by HDHomeRun.  Either their system has been abused and they've put a stop to it or just don't want to be friendly to people that use their hardware with other software like Jellyfin or Plex, which is the whole purpose of the hardware.
-
-So shame on you HDHomeRun if that is the case.
+If you get this you are probably being blocked by HDHomeRun.  Little I can do other than suggest you only run this app a little as you can get away with and at differing times of day.  (See <b>Other Recommendations</b> at the end of this page for an alternative to this app)
 
 ## Fixes and Acknowledgments
 
@@ -92,7 +91,7 @@ python HDHomeRunEPG_to_XmlTv.py --host 192.168.68.102
 
 Please find a <b>binaries</b> directory in the repository root that contains a PyInstaller built distibution that can be run independently on the platform it is built for.  Extract the relevant binary platform zip files onto your machine and run according to the instructions below:
 
-### Debian Linux (#7 Tested)
+### Debian Linux (#28 Tested)
 
 To run the Debian Linux binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
 
@@ -106,7 +105,7 @@ If this fails and you need to make the HDHomeRunEPG_To_XmlTv runnable, type in t
 chmod 755 HDHomeRunEPG_To_XmlTv
 ```
 
-### Mac OS (#7 Tested)
+### Mac OS (#7 Tested) (TBC: When I have a working MacOS environment I will build this)
 
 To run the Mac OS binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
 
@@ -120,7 +119,7 @@ If this fails and you need to make the HDHomeRunEPG_To_XmlTv runnable, type in t
 chmod 755 HDHomeRunEPG_To_XmlTv
 ```
 
-### Windows (#14 Tested)
+### Windows (#28 Tested)
 
 To run the Windows binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
 
@@ -161,3 +160,7 @@ You can run this project using Docker. Here are the steps:
 	This will automatically update the EPG file as specified by the `FILENAME` environment variable.
 
 ---
+
+# Other Recommendations
+
+A kind individual [@thekoma](https://github.com/thekoma/HDHomeRunEPG-to-XmlTv) has developed an API service that fetches and caches EPG from HDHomeRun devices the serves the data as an XMLTV output.
