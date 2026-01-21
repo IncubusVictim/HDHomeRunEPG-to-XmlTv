@@ -3,6 +3,7 @@ import argparse
 import datetime
 import json
 import logging
+import os
 import pytz
 import ssl
 import sys
@@ -220,6 +221,12 @@ def generate_xmltv(host: str, days: int, hours: int, filename: str) -> None:
     except Exception as e:
         logger.error("Error writing XML file: %s" % e)
         sys.exit(1)
+
+def env_int(name, default):
+    try:
+        return int(os.environ.get(name, default))
+    except (TypeError, ValueError):
+        return default
         
 def main():
     """Main function to parse arguments and generate XMLTV file."""
@@ -228,11 +235,11 @@ def main():
         description="Program to download the HDHomeRun device EPG and convert it to an XMLTV format suitable for Jellyfin."
     )
     parser.add_argument("--help", action="store_true", help="Show the command parameters available.")
-    parser.add_argument("--host", default="hdhomerun.local", help="The host name or IP address of the HDHomeRun server if different from \"hdhomerun.local\".")
-    parser.add_argument("--filename", default="epg.xml", help="The file path and name of the EPG to be generated. Defaults to epg.xml in the current directory.")
-    parser.add_argument("--days", type=int, default=7, help="The number of days in the future from now to obtain an EPG for. Defaults to 7 but will be restricted to a max of about 14 by the HDHomeRun device.")
-    parser.add_argument("--hours", type=int, default=3, help="The number of hours of guide interation to obtain. Defaults to 3 hours.")
-    parser.add_argument("--debug", default="on", help="Switch debug log message on, options are \"on\", \"full\" or \"off\". Defaults to \"on\"")
+    parser.add_argument("--host",default=os.environ.get("HOST", "hdhomerun.local"),help='...')
+    parser.add_argument("--filename",default=os.environ.get("FILENAME", "epg.xml"),help='...')
+    parser.add_argument("--days",type=int,default=env_int("DAYS", 7),help='...')
+    parser.add_argument("--hours",type=int,default=env_int("HOURS", 3),help='...')
+    parser.add_argument("--debug",default=os.environ.get("DEBUG", "on"),help='...')
     
     args = parser.parse_args()
     
