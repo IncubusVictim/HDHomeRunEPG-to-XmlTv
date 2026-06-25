@@ -4,9 +4,11 @@
 <a href="https://buymeacoffee.com/incubusvictim" target="_blank"><img align="top" src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a> <img align="top" src="https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/blob/main/bmc_qr.png" width="100" />
 </div>
 
-## IMPORTANT NOTICE: on '403 Forbidden' error
+## Versions
 
-If you get this you are probably being blocked by HDHomeRun.  Little I can do other than suggest you only run this app a little as you can get away with and at differing times of day.  (See <b>Other Recommendations</b> at the end of this page for an alternative to this app)
+The current version is v2.1 which this README.md file relates direct to.
+
+The current version is always HDHomeRunEPG_To_XmlTv.py and the previous versions also exist for reference, but these are not recommended now as we have a Silicon Dust API to get the XMLTV data from.
 
 ## Fixes and Acknowledgments
 
@@ -17,21 +19,22 @@ If you get this you are probably being blocked by HDHomeRun.  Little I can do ot
 [#10](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/10) - The re-vamp in v2 has re-arranged all XMLTV elements to match the DTD more closely.<br/>
 [#11](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/11) - The re-vamp in v2 has allowed me to attempt the location timezone detection properly.<br/>
 [#12](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/12) - The re-vamp in v2 corrects the formatting of the XMLTV so it no longer is on a single line.<br/>
+[#31](https://github.com/IncubusVictim/HDHomeRunEPG-to-XmlTv/issues/31) - Modified to utilise the HDHomeRun API that now gives 2 days worth of XMLTV data in a single call.
 
 ## Features
 
-A Python program to download the current EPG from an HDHomeRun Quattro box for the next 7 days and convert this into an XMLTV formatted file.  This should work with some other HDHomeRun models and you may possibly be able to get 14 days of EPG data, but I have only tested with the Quattro.
+A Python program to download the current EPG provided by Silicon Dust's API for a HDHomeRun device you have at home.  The API provides 2 days worth of EPG in XMLTV format already, the only tweak I have had to make is with the Channel ID so it maps directly to the same channel on your device.  This has the effect in Jellyfin where no manual mapping is necessary for these channels.  This should work with some other HDHomeRun models, but I have only tested with the Quattro.
 
-I developed this so I could easily update the EPG on a Jellyfin media server that was linked to an HDHomeRun Quattro.  The HDHomeRun Quattro hardware automatically maintains the EPG for the channels it has tuned in, so it made sense to use this.
+I developed this so I could easily update the EPG on a Jellyfin media server that was linked to an HDHomeRun Quattro.
 
-<i><b>Version 2 Notes:</b> This is a re-vamp of the original v1 code to fix a number of bugs, but primarily to produce a more professional piece of code now that I have more experience with Python.</i>
+<i><b>Version 2.1 Notes:</b> This latest version has removed all the manual processing necessary to shape the XMLTV produce as this is now given in its entirety by the Silicon Dust API.</i>
 
-<i><b>NOTE 1:</b> The Binaries I have generated are purely for those that are not comfortable running the Python application.  All of the binaries run on my local hardware and virtual machines, but if you have any problems please send me a message and I will try my best to help out.</i>
+<i><b>NOTE 1:</b> The Binaries I have generated are purely for those that are not comfortable running the Python application.  All of the binaries run on my local hardware and OS's, but if you have any problems please send me a message and I will try my best to help out if I can.</i>
 
 ## Usage
 
 ```
-python HDHomeRunEPG_To_XmlTv.py [--help] [--host <HOST>] [--filename <FILENAME>] [--days <DAYS>] [--hours <HOURS>] [--debug <DEBUG>]
+python HDHomeRunEPG_To_XmlTv.py [--help] [--host <HOST>] [--filename <FILENAME>] [--debug <DEBUG>]
 ```
 
 |      Parameter | Description     |
@@ -39,8 +42,6 @@ python HDHomeRunEPG_To_XmlTv.py [--help] [--host <HOST>] [--filename <FILENAME>]
 | `--help`  | Show the command parameters available. |
 | `--host <HOST>`  | The host name or IP address of the HDHomeRun server if different from "hdhomerun.local". |
 | `--filename <FILENAME>` | The file path and name of the EPG to be generated. Defaults to epg.xml in the current directory. |
-| `--days <DAYS>` | The number of days in the future from now to obtain an EPG for. Defaults to 7 but will be restricted to the maximum number of days the HDHomeRun device will return. |
-| `--hours <HOURS>` | The number of hours of guide interation to obtain. Defaults to 3 hours. This is an adavanced option which basically tells the app how many hours to increment for each query to the HDHomeRun device.  Making this too large will mean gaps can appear int he guide, equally making it too small will make the app run longer. Note any duplicate programmes retrieved are ignored anyway. |
 | `--debug <DEBUG>` | Switch debug log message on, options are "on", "full" or "off". Defaults to "on". This is usefuly to see the detail of all the programmes being retrieved, but will mak the app take longer to run. |
 
 ## Python Pre-requisites
@@ -55,7 +56,7 @@ Install Python 3.9 or above onto your platform if it is not already available an
 python --version
 ```
 
-If this return the Python version you have it installed correctly.
+If this returns the Python version you have it installed correctly.
 
 ### Install PIP
 
@@ -76,12 +77,18 @@ pip3 --version
 Requirements are listed in the requirements.txt file. These can be installed using the following command:
 
 ```
-pip -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ### Running the HDHomeRunEPG_To_XmlTv Python app
 
-Simply run the HDHomeRunEPG_To_XmlTv app on your platform, e.g.
+Simply run the HDHomeRunEPG_To_XmlTv app on your platform, the following will produce an epg.xml file from your HDHomeRun.local device.
+
+```
+python HDHomeRunEPG_to_XmlTv.py
+```
+
+If you don't have the HDHomeRun.local address, use you IP address directly as follows:
 
 ```
 python HDHomeRunEPG_to_XmlTv.py --host 192.168.68.102
@@ -91,7 +98,7 @@ python HDHomeRunEPG_to_XmlTv.py --host 192.168.68.102
 
 Please find a <b>binaries</b> directory in the repository root that contains a PyInstaller built distibution that can be run independently on the platform it is built for.  Extract the relevant binary platform zip files onto your machine and run according to the instructions below:
 
-### Debian Linux (#28 Tested)
+### Debian Linux (#31 Tested)
 
 To run the Debian Linux binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
 
@@ -119,7 +126,7 @@ If this fails and you need to make the HDHomeRunEPG_To_XmlTv runnable, type in t
 chmod 755 HDHomeRunEPG_To_XmlTv
 ```
 
-### Windows (#28 Tested)
+### Windows (#31 Tested)
 
 To run the Windows binary from a terminal window, put yourself in the binaries directory and run the following command with any parameters (as described above), e.g:
 
