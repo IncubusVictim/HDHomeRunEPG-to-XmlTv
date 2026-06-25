@@ -2,6 +2,7 @@
 import argparse
 import json
 import logging
+import os
 import pytz
 import re
 import ssl
@@ -152,6 +153,12 @@ def generate_xmltv(host: str, filename: str) -> None:
     except Exception as e:
         logger.error("Error writing XML file: %s" % e)
         sys.exit(1)
+
+def env_int(name, default):
+    try:
+        return int(os.environ.get(name, default))
+    except (TypeError, ValueError):
+        return default
         
 def main():
     """Main function to parse arguments and generate XMLTV file."""
@@ -160,9 +167,9 @@ def main():
         description="Program to download the HDHomeRun device EPG in XMLTV format suitable for Jellyfin."
     )
     parser.add_argument("--help", action="store_true", help="Show the command parameters available.")
-    parser.add_argument("--host", default="hdhomerun.local", help="The host name or IP address of the HDHomeRun server if different from \"hdhomerun.local\".")
-    parser.add_argument("--filename", default="epg.xml", help="The file path and name of the EPG to be generated. Defaults to epg.xml in the current directory.")
-    parser.add_argument("--debug", default="on", help="Switch debug log message on, options are \"on\", \"full\" or \"off\". Defaults to \"on\"")
+    parser.add_argument("--host",default=os.environ.get("HOST", "hdhomerun.local"),help='...')
+    parser.add_argument("--filename",default=os.environ.get("FILENAME", "epg.xml"),help='...')
+    parser.add_argument("--debug",default=os.environ.get("DEBUG", "on"),help='...')
     
     args = parser.parse_args()
     
