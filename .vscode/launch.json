@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--days", "8", "--debug", "on"]
+            "args": ["--debug", "on"]
         }
     ]
 }

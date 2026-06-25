@@ -2,3 +2,5 @@ argparse
 pytz
 requests
 tzlocal
+defusedxml
+lxml
